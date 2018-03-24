@@ -6,7 +6,7 @@ go:
   - "1.10.x"
   - master
 
-script: go get -v github.com/etcdevteam/go-schroedinger/cmd/schroedinger/... && go test
+script: go get -v github.com/ETCDEVTeam/go-schroedinger/cmd/schroedinger/... && go test
 notifications:
   email: false
 

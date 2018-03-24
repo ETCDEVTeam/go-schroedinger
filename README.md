@@ -18,7 +18,7 @@ solutions:
 ## Install
 
 ```
-go get -v github.com/etcdevteam/go-schroedinger/cmd/schroedinger/...
+go get -v github.com/ETCDEVTeam/go-schroedinger/cmd/schroedinger/...
 ```
 
 ## Usage
