@@ -1,15 +1,25 @@
 package schroedinger
 
 import (
-	"testing"
-	"reflect"
 	"math/rand"
-	"time"
 	"os"
+	"reflect"
+	"testing"
+	"time"
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+}
+
+func TestCat(t *testing.T) {
+	if os.Getenv("thisIsOnlyATest") == "" {
+		t.Skip("No peeking!")
+	}
+	aliveOrDead := rand.Float64()
+	if aliveOrDead > 0.3 { // i mean, the odds could be worse
+		t.Fatalf("Kitty? %.2f", aliveOrDead)
+	}
 }
 
 func TestGrepFailures(t *testing.T) {
@@ -43,8 +53,8 @@ ok  	github.com/ethereumproject/go-ethereum/p2p/distip	0.014s
 }
 
 func TestParseMatchList(t *testing.T) {
-	cases := []struct{
-		arg string
+	cases := []struct {
+		arg  string
 		want []string
 	}{
 		{arg: "", want: nil},
@@ -54,16 +64,6 @@ func TestParseMatchList(t *testing.T) {
 		if got := parseMatchList(c.arg); (got == nil && c.want != nil) || len(got) != len(c.want) {
 			t.Errorf("got: %v, want: %v", got, c.want)
 		}
-	}
-}
-
-func TestCat(t *testing.T) {
-	if os.Getenv("thisIsOnlyATest") == "" {
-		t.Skip("No peeking!")
-	}
-	aliveOrDead := rand.Float64()
-	if aliveOrDead > 0.3 { // i mean, the odds could be worse
-		t.Fatalf("Kitty? %.2f", aliveOrDead)
 	}
 }
 
