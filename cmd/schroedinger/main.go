@@ -21,7 +21,7 @@ var whitelistMatch string
 var blacklistMatch string
 
 func init() {
-	flag.StringVar(&testsFile, "f", "schroedinger-tests.txt", "file argument")
+	flag.StringVar(&testsFile, "f", "", "path file to file containing tests to run")
 	flag.StringVar(&whitelistMatch, "w", "", "whitelist lines containing")
 	flag.StringVar(&blacklistMatch, "b", "", "blacklist lines containing")
 	flag.IntVar(&trialsAllowed, "t", 3, "allowed trials before nondeterministic test actually fails")
@@ -29,6 +29,12 @@ func init() {
 }
 
 func main() {
+	if testsFile == "" {
+		log.Fatal("testsfile cannot be empty")
+	}
+	if trialsAllowed < 1 {
+		log.Fatal("trials allowed cannot be less than 1")
+	}
 	if (whitelistMatch != "" && blacklistMatch != "") && whitelistMatch == blacklistMatch {
 		log.Fatal("whitelist cannot match blacklist")
 	}
