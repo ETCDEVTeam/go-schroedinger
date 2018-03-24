@@ -1,0 +1,5 @@
+# I'm a comment followed by an empty line
+
+github.com/etcdevteam/go-schroedinger TestCat
+github.com/etcdevteam/go-schroedinger/...
+github.com/etcdevteam/go-schroedinger

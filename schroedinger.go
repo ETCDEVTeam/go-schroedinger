@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -20,18 +19,7 @@ const commentPattern = "#"
 var errCommentLine = errors.New("comment line")
 var errEmptyLine = errors.New("empty line")
 
-// tests file should contains only lines or blank lines of the form:
-// ./eth/downloader TestCanonicalSynchronisation
-// or
-// github.com/ethereumproject/go-ethereum/eth/downloader TestFastCriticalRestarts
-var testsFile string
-
-// allowed times to try to get a nondeterministic test to pass
 var trialsAllowed int
-
-// string to match to *list tests
-var whitelistMatch string
-var blacklistMatch string
 
 // different for windows
 var goExecutablePath string
@@ -50,11 +38,6 @@ func (t *test) String() string {
 func init() {
 	goExecutablePath = getGoPath()
 	commandPrefix = getCommandPrefix()
-	flag.StringVar(&testsFile, "f", "schroedinger-tests.txt", "file argument")
-	flag.StringVar(&whitelistMatch, "w", "", "whitelist lines containing")
-	flag.StringVar(&blacklistMatch, "b", "", "blacklist lines containing")
-	flag.IntVar(&trialsAllowed, "t", 3, "allowed trials before nondeterministic test actually fails")
-	flag.Parse()
 }
 
 func getGoPath() string {
@@ -142,7 +125,7 @@ func filterTests(tests []*test, allowed func(*test) bool) []*test {
 	return out
 }
 
-func grepFails(gotestout []byte) []string {
+func grepFailures(gotestout []byte) []string {
 	reader := bytes.NewReader(gotestout)
 	scanner := bufio.NewScanner(reader)
 
@@ -204,7 +187,7 @@ func tryPackageTest(t *test, c chan error) {
 		fmt.Println()
 		fmt.Println(string(o))
 
-		fails := grepFails(o)
+		fails := grepFailures(o)
 		if len(fails) == 0 {
 			log.Fatalf("%s reported failure, but no failing tests were discovered, err=%v",
 				getNonRecursivePackageName(t.pkg), e)
@@ -275,15 +258,24 @@ func parseMatchList(list string) []string {
 	return strings.Split(ll, ",")
 }
 
-func main() {
-	if (whitelistMatch != "" && blacklistMatch != "") && whitelistMatch == blacklistMatch {
-		log.Fatal("whitelist cannot match blacklist")
+func Run(testsFile, whitelistMatch, blacklistMatch string, trialsN int) {
+	e := run(testsFile, whitelistMatch, blacklistMatch, trialsN)
+	if e != nil {
+		log.Fatal(e)
 	}
+}
+
+func run(testsFile, whitelistMatch, blacklistMatch string, trialsN int) error {
+	if trialsN == 0 {
+		return fmt.Errorf("trials allowed must be >0, got: %d", trialsAllowed)
+	}
+	trialsAllowed = trialsN
+
 	whites := parseMatchList(whitelistMatch)
 	blacks := parseMatchList(blacklistMatch)
 
 	testsFile = filepath.Clean(testsFile)
-	testsFile, _ := filepath.Abs(testsFile)
+	testsFile, _ = filepath.Abs(testsFile)
 
 	allowed := func(t *test) bool {
 		return lineMatchList(t.pkg+" "+t.name, whites, blacks)
@@ -291,7 +283,7 @@ func main() {
 
 	alltests, err := collectTests(testsFile)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	tests := filterTests(alltests, allowed)
@@ -319,9 +311,10 @@ func main() {
 
 	for i := 0; i < len(tests); i++ {
 		if e := <-results; e != nil {
-			log.Fatal(e)
+			return e
 		}
 	}
 
 	close(results)
+	return nil
 }
