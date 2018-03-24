@@ -73,9 +73,9 @@ func TestIntegration(t *testing.T) {
 	//github.com/etcdevteam/go-schroedinger
 
 	want := []*test{
-		{pkg: "github.com/etcdevteam/go-schroedinger", name: "TestCat"},
-		{pkg: "github.com/etcdevteam/go-schroedinger/..."},
-		{pkg: "github.com/etcdevteam/go-schroedinger"},
+		{pkg: "github.com/ETCDEVTeam/go-schroedinger", name: "TestCat"},
+		{pkg: "github.com/ETCDEVTeam/go-schroedinger/..."},
+		{pkg: "github.com/ETCDEVTeam/go-schroedinger"},
 	}
 
 	got, err := collectTests("./example.txt")
