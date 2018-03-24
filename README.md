@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ETCDEVTeam/go-schroedinger.svg?branch=master)](https://travis-ci.org/ETCDEVTeam/go-schroedinger)
+
 # Schroedinger
 
 Nondeterministic tests are unreliable and an enormous pain in the ass,
