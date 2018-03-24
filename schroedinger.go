@@ -62,6 +62,15 @@ func parseLinePackageTest(s string) *test {
 	return t
 }
 
+func parseMatchList(list string) []string {
+	// eg. "", "downloader,fetcher", "sync"
+	if len(list) == 0 {
+		return nil
+	}
+	ll := strings.Trim(list, " ")
+	return strings.Split(ll, ",")
+}
+
 func getNonRecursivePackageName(s string) string {
 	out := strings.TrimSuffix(s, string(filepath.Separator)+"...")
 	out = strings.TrimSuffix(out, "...")
@@ -85,19 +94,27 @@ func handleLine(s string) (*test, error) {
 	return t, nil
 }
 
-func runTest(t *test) ([]byte, error) {
-	args := fmt.Sprintf("test %s", t.pkg)
-	if t.name != "" {
-		args += fmt.Sprintf(" -run %s", t.name)
+func lineMatchList(line string, whites, blacks []string) bool {
+	if blacks != nil && len(blacks) > 0 {
+		for _, m := range blacks {
+			if strings.Contains(line, m) {
+				return false
+			}
+		}
 	}
-	log.Println("|", commandPrefix[0], commandPrefix[1], goExecutablePath+" "+args)
-	cmd := exec.Command(commandPrefix[0], commandPrefix[1], goExecutablePath+" "+args)
-	t.trials++
-	out, err := cmd.CombinedOutput()
-	return out, err
+	if whites != nil && len(whites) > 0 {
+		for _, m := range whites {
+			if !strings.Contains(line, m) {
+				return false
+			} else {
+				return true
+			}
+		}
+	}
+	return true
 }
 
-func collectTests(f string) (tests []*test, err error) {
+func collectTestsFromFile(f string) (tests []*test, err error) {
 	file, err := os.Open(f)
 	if err != nil {
 		return tests, err
@@ -151,6 +168,18 @@ func grepFailures(gotestout []byte) []string {
 	}
 
 	return fails
+}
+
+func runTest(t *test) ([]byte, error) {
+	args := fmt.Sprintf("test %s", t.pkg)
+	if t.name != "" {
+		args += fmt.Sprintf(" -run %s", t.name)
+	}
+	log.Println("|", commandPrefix[0], commandPrefix[1], goExecutablePath+" "+args)
+	cmd := exec.Command(commandPrefix[0], commandPrefix[1], goExecutablePath+" "+args)
+	t.trials++
+	out, err := cmd.CombinedOutput()
+	return out, err
 }
 
 func tryIndividualTest(t *test, c chan error) {
@@ -229,35 +258,6 @@ func tryTest(t *test, c chan error) {
 	}
 }
 
-func lineMatchList(line string, whites, blacks []string) bool {
-	if blacks != nil && len(blacks) > 0 {
-		for _, m := range blacks {
-			if strings.Contains(line, m) {
-				return false
-			}
-		}
-	}
-	if whites != nil && len(whites) > 0 {
-		for _, m := range whites {
-			if !strings.Contains(line, m) {
-				return false
-			} else {
-				return true
-			}
-		}
-	}
-	return true
-}
-
-func parseMatchList(list string) []string {
-	// eg. "", "downloader,fetcher", "sync"
-	if len(list) == 0 {
-		return nil
-	}
-	ll := strings.Trim(list, " ")
-	return strings.Split(ll, ",")
-}
-
 func Run(testsFile, whitelistMatch, blacklistMatch string, trialsN int) {
 	e := run(testsFile, whitelistMatch, blacklistMatch, trialsN)
 	if e != nil {
@@ -281,7 +281,7 @@ func run(testsFile, whitelistMatch, blacklistMatch string, trialsN int) error {
 		return lineMatchList(t.pkg+" "+t.name, whites, blacks)
 	}
 
-	alltests, err := collectTests(testsFile)
+	alltests, err := collectTestsFromFile(testsFile)
 	if err != nil {
 		return err
 	}
@@ -303,11 +303,9 @@ func run(testsFile, whitelistMatch, blacklistMatch string, trialsN int) error {
 		log.Printf("FINISHED (%v)", time.Since(allstart))
 	}()
 
-	go func() {
-		for _, t := range tests {
-			tryTest(t, results)
-		}
-	}()
+	for _, t := range tests {
+		go tryTest(t, results)
+	}
 
 	for i := 0; i < len(tests); i++ {
 		if e := <-results; e != nil {

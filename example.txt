@@ -1,5 +1,5 @@
-# I'm a comment followed by an empty line
+# I'm a comment. Empty lines are OK too.
 
-github.com/ETCDEVTeam/go-schroedinger TestCat
+github.com/ETCDEVTeam/go-schroedinger TestCat # you can also put comments at the end like usual
 github.com/ETCDEVTeam/go-schroedinger/...
 github.com/ETCDEVTeam/go-schroedinger

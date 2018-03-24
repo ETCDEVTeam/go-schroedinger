@@ -78,7 +78,7 @@ func TestIntegration(t *testing.T) {
 		{pkg: "github.com/ETCDEVTeam/go-schroedinger"},
 	}
 
-	got, err := collectTests("./example.txt")
+	got, err := collectTestsFromFile("./example.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
